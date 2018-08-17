@@ -1,0 +1,213 @@
+// code for learning inheritance, polymorphism & casts
+
+// Animals.h
+
+#ifndef ANIMALS_H
+#define ANIMALS_H
+#include <string>
+using namespace std; // for learning purpose only
+class Animals
+{
+    string m_name;
+    public:
+        Animals();
+        virtual void rawr(){cout << "rawr" << endl;}
+};
+
+
+class cat: public Animals
+{
+    int m_color;
+public:
+
+    void rawr(){cout << "meow" << endl;};
+
+};
+
+class cow: public Animals
+{
+public:
+
+    void rawr(){cout << "moo" << endl;};
+};
+
+class dog: public Animals
+{
+public:
+
+    void rawr(){cout << "woof" << endl;};
+};
+
+class giant_cat: public cat
+{
+public:
+
+    void rawr(){cout << "MEOW" << endl;};
+};
+
+#endif // ANIMALS_H
+
+
+// object.h
+
+#ifndef OBJECT_H
+#define OBJECT_H
+
+#include <vector>
+#include <sstream>
+
+class object
+{
+
+public:
+    object(){cout << "This is object constructor" << endl;}
+    virtual ~object(){cout << "This is object destructor" << endl;}
+    virtual void print(){cout << "This is object class" << endl;}
+    virtual object* add(object * other){return nullptr;}
+};
+
+
+class number: public object
+{
+    int m_value;
+public:
+    number(int value):m_value(value){cout << "This is number constructor" << endl;}
+    ~number(){cout << "This is number destructor" << endl;}
+    void print(){cout << "This is number class with a number " << m_value << endl;}
+    object* add(object * other)
+    {
+        if(number* num = dynamic_cast<number*>(other))
+            return new number(m_value + num->m_value);
+        return nullptr;
+    }
+    friend class text;
+};
+
+template <class T>
+std::string my_to_string(const T& value)
+{
+    stringstream ss;
+    ss << value;
+    return ss.str();
+}
+
+class text: public object
+{
+    std::string str;
+public:
+    text(const std::string& _str):str(_str){cout << "This is text constructor" << endl;}
+    ~text(){cout <<"This is text destructor" << endl;}
+    void print(){cout << "This is text class with string " << str << endl;}
+    object* add(object * other)
+    {
+        if(text* txt = dynamic_cast<text*>(other))
+            return new text(str + txt->str);
+        else if(number* num = dynamic_cast<number*>(other))
+            return new text(str + my_to_string(num->m_value));
+        return nullptr;
+    }
+};
+
+
+#endif // OBJECT_H
+
+// Animals.cpp
+
+#include <iostream>
+#include "Animals.h"
+#include "object.h"
+using namespace std;
+
+Animals::Animals()
+{
+
+}
+
+
+// main.cpp
+
+#include <iostream>
+#include "Animals.h"
+#include "object.h"
+#include <vector>
+
+using namespace std;
+
+typedef unsigned int UI32;
+
+int main(int argc, char** argv)
+{
+    /*
+    // static binding
+    vector<Animals*> animals;
+    animals.push_back(new Animals());
+    animals.push_back(new cat());
+    animals.push_back(new cow());
+    animals.push_back(new dog());
+    animals.push_back(new giant_cat());
+
+    for(UI32 i = 0; i < animals.size(); i++)
+    {
+
+        // dynamic binding
+        void*** current = (void***) animals[i]; 
+        void** vtable = current[0]; 
+        void* method = vtable[0]; 
+        auto func = (void(*)()) method;
+
+        func();
+
+
+        //animals[i]->rawr();
+    }
+    */
+
+    /*
+    vector<cat*>cats;
+
+
+    cats.push_back(new cat());
+    cats.push_back(new giant_cat());
+
+    for(UI32 i = 0; i < cats.size(); i++)
+    {
+        cats[i]->rawr();
+    }
+    */
+
+
+    std::vector<object*>objects;
+    objects.push_back(new object());
+    objects.push_back(new number(10));
+    objects.push_back(new text("asfd"));
+
+
+    for(UI32 i = 0; i < objects.size(); i++)
+    {
+        for(UI32 j = 0; j < objects.size(); j++)
+        {
+            object* a = objects[i];
+            object* b = objects[j];
+            object* c = a->add(b);
+
+            if(c)
+            {
+                cout << endl;
+                a->print();
+                cout << endl;
+                b->print();
+                cout << endl;
+                c->print();
+                cout << endl;
+
+            }
+        }
+    }
+
+    for(UI32 i = 0; i < objects.size(); i++)
+    {
+        delete objects[i];
+    }
+
+    return 0;
+}
