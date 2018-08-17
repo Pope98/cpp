@@ -1,0 +1,108 @@
+#include "stdafx.h"
+
+using namespace std;
+
+class prime_numbers_iter;
+
+class prime_numbers {
+	int value_min, value_max;
+public:
+	prime_numbers():value_min(0), value_max(0){}
+	prime_numbers(int new_value_min, int new_value_max):value_min(new_value_min), value_max(new_value_max){}
+	static bool is_prime(int value) {
+		for (int i = 2; i <= value / 2; i++){
+			if (value % i == 0)
+				return false;
+		}
+		return true;
+	}
+	prime_numbers_iter begin() const;
+	prime_numbers_iter end() const;
+};
+
+class prime_numbers_iter : public iterator<input_iterator_tag, int> {
+	 int current_value, max_value;
+public:
+	prime_numbers_iter():current_value(0), max_value(0){}
+	prime_numbers_iter(int new_current_value, int new_value_max):current_value(new_current_value), max_value(new_value_max){}
+	 int operator * () const { return current_value; }
+	bool operator != (const prime_numbers_iter& other) const {
+		return current_value != other.current_value;
+	}
+	bool operator == (const prime_numbers_iter& other) const {
+		return current_value == other.current_value;
+	}
+	prime_numbers_iter& operator ++() { // ++it
+		while (current_value < max_value) {
+			current_value += 1;
+			if (prime_numbers::is_prime(current_value))
+				break;
+		}
+		return *this;
+	}
+	prime_numbers_iter& operator ++(int) { // it++
+		prime_numbers_iter result = *this;
+		++(*this);
+		return result;
+	}
+};
+
+prime_numbers_iter prime_numbers::begin() const {
+	prime_numbers_iter iter(max(value_min, 2), value_max);
+	if (!is_prime(value_min))
+		++iter;
+	return iter;
+}
+
+prime_numbers_iter prime_numbers::end() const {
+	return prime_numbers_iter(value_max, value_max);
+}
+
+/*
+bool ends_with_7(int value) {
+	return value % 10 == 7;
+}
+*/
+
+int main()
+{
+	prime_numbers primes(1, 100);
+	for (auto it = primes.begin(); it != primes.end(); ++it) {
+		cout << *it << endl;
+	}
+	cout << endl;
+	cout << distance(primes.begin(), primes.end()) << " Prime numbers found." << endl;
+	auto ends_with_7 = [](int value) -> bool {
+		return value % 10 == 7;
+	};
+	int num_7 = count_if(primes.begin(), primes.end(), ends_with_7);
+	cout << num_7 << " numbers ends with '7':" << endl;
+	vector<int>sevens(num_7);
+	copy_if(primes.begin(), primes.end(), sevens.begin(), ends_with_7);
+	for (auto seven : sevens)
+		cout << seven << " ";
+	cout << endl;
+    return 0;
+}
+
+//int num_7 = count_if(primes.begin(), primes.end(), ends_with_7);
+
+
+int main2() 
+{
+	vector<unique_ptr<int>> objects(10);
+	generate_n(objects.begin(), objects.size(), []() {
+		return unique_ptr<int>(new int(rand() % 10 - 5));
+	});
+	auto new_end = remove_if(objects.begin(), objects.end(), [](auto& ptr) {
+		return *ptr < 0; // remove numbers less than 0
+	});
+	objects.erase(new_end, objects.end()); // erase leaves gaps at the end of vector, must delete manually
+	for_each(objects.begin(), objects.end(), [](unique_ptr<int>& ptr) {
+		cout << *ptr << endl;
+	});
+}
+
+// ** can be replaced with for_each **
+  //for (auto& ptr : objects)
+       //cout << *ptr << endl;
