@@ -1,0 +1,131 @@
+#include "stdafx.h"
+
+using namespace std;
+
+#if 0
+struct foo {
+	int *value;
+	foo() : value(new int) { cout << "default ctor" << endl; }
+	foo(const foo& other) : value(new int(*other.value)) { cout << "copy ctor" << endl; }
+	~foo() { cout << "dtor" << endl; }
+	foo& operator = (const foo& other) {
+		cout << "assign" << endl;
+		*value = *other.value;
+		return *this;
+	}
+	void bar() const{
+		//this->value = nulltpr; /* taip neveiks, nes keiciame reiksmes, kurios yra const */
+		*this->value = 25; // ne reiksme, o i kur rodo
+	}
+};
+
+void test(foo& f2) {
+	cout << "test" << endl;
+}
+int main()
+{
+	const foo a, b, c;
+	a.bar();
+    return 0;
+}
+
+#endif
+/*
+template <typename T>
+class point {
+	T x, y;
+public:
+	point(): x(0), y(0){}
+	point(T _x, T _y): x(_x), y(_y){}
+	T x() const { return x; }
+	T y() const { return y; }
+};
+int main()
+{
+	point<int> pt(2, 5);
+	point<float> pt2(2.5, 2.6);
+	point<vector<int>> pt3;
+	//vector<int>vec_of_ints;
+	vector<string>vec_of_ints;
+}
+*/
+
+// testavimo klase
+class foo {
+public:
+	foo() { cout << "ctor" << endl; }
+	~foo() { cout << "dtor" << endl; }
+	void test() { cout << "test" << endl; }
+};
+
+
+template <typename T>
+class shared_pointer {
+	T* m_object;
+	int *m_ref_counter;
+public:
+	shared_pointer():
+		m_object(nullptr),
+		m_ref_counter(nullptr) { }
+	shared_pointer(T* object):
+		m_object(object),
+		m_ref_counter(new int(1)) { } 
+	shared_pointer(const shared_pointer<T>& other): m_object(other.m_object), m_ref_counter(other.m_ref_counter)
+	{
+		retain();
+	}
+	~shared_pointer() { release(); }
+
+	T* operator -> () const{ return m_object; }
+	T& operator * () const { return *m_object; } // isrodyklinamas objektas
+	void operator = (const shared_pointer<T>& other) { 
+		other.retain();
+		release();
+		m_object = other.m_object;
+		m_ref_counter = other.m_ref_counter;
+	}
+	operator bool() const { return m_object != nullptr; }
+private:
+	void release() {
+		if (m_object) { 
+			*m_ref_counter -= 1; 
+			cout << "R-- " << *m_ref_counter << endl;
+			if (*m_ref_counter == 0) {
+				// delete ir object ir counter
+				delete m_object;
+				delete m_ref_counter;
+			}
+			m_object = nullptr;
+			m_ref_counter = nullptr;
+		}
+	}
+	void retain() const { 
+		if (m_object) {
+			*m_ref_counter += 1;
+			cout << "R++ " << *m_ref_counter << endl;
+		}
+	}
+
+
+};
+
+void test2(shared_pointer<foo> ptr3) {
+	ptr3->test();
+	(*ptr3).test();
+	
+}
+void test3(bool a){}
+
+int main()
+{
+	shared_pointer<foo> ptr = new foo;
+	//shared_pointer<foo> ptr2; // luzta, nes maziname m_ref_counter, kuris neiskyrus dinamiskai, yra nullptr
+	//shared_pointer<foo> ptr2 = ptr; // blogai, nes m_ref_counter jau turi buti 2, ne 1, todel reiks kurti copy ctor
+	//shared_pointer<foo> ptr2 = ptr;
+	//shared_pointer<foo> ptr2;
+	//ptr2 = ptr; // free ptr2 ref_count then assing (2) to ptr2 from ptr
+	//test2(ptr);
+	//shared_pointer<foo>ptr2 = ptr;
+	//ptr = ptr;
+	test3(ptr);
+}
